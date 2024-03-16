@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "LC VIDEO SOLUTION",
+  "version": "1.0",
+  "description": "Add Links to Video Solutions of the Problem",
+  "background": {
+    "service_worker": "service-worker.js"
+  },
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "js": [
+        "content.js"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
+  "permissions": [
+    "tabs",
+    "storage"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ]
+}
