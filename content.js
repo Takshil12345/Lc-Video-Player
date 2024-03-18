@@ -3,6 +3,7 @@ console.log(window.location.href)
 
 let showVidePage = false
 let lastSet = "description"
+let isDragging = false;
 
 if (window.location.href.startsWith("https://leetcode.com/problems/")) {
     // Create the video column element
@@ -14,7 +15,30 @@ if (window.location.href.startsWith("https://leetcode.com/problems/")) {
         newChild.textContent = "Video"; // Set content
         newChild.addEventListener('click', display);
         parent.appendChild(newChild);
-        console.log('hi')
+
+        const splitter = document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0];
+        splitter.addEventListener('mousedown', (event) => {
+            isDragging = true;
+            console.log("Dragging started")
+
+        });
+
+        document.addEventListener('mousemove', (event) => {
+            if (isDragging && showVidePage) {
+                console.log("width is changing")
+                console.log(splitter.style.left)
+                // document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0];
+                const divToChange = document.getElementById('sendanamakwalichut');
+                if (showVidePage) divToChange.style.setProperty('--width', `${splitter.style.left}`);
+
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            console.log("Dragging finished")
+            // console.log(document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0]);
+            isDragging = false;
+        });
 
     }, 3000)
 
@@ -48,24 +72,25 @@ async function display() {
         const arr = []
         arr.push(description, editorial, solution, submission, tabBar)
         for (let i = 0; i < 4; i++) {
-            console.log(arr[i].style.display)
+            // console.log(arr[i].style.display)
             if (arr[i].style.display !== 'none') {
                 if (i === 0) lastSet = 'description'
                 else if (i === 1) lastSet = 'editorial'
                 else if (i === 2) lastSet = 'solution'
                 else lastSet = 'submission'
-                console.log(i + "," + lastSet)
+                // console.log(i + "," + lastSet)
                 break
             }
         }
-        console.log(lastSet)
+        // console.log(lastSet)
         make_display_none(arr)
 
         // console.log("HELLO")
-
+        console.log(description.style.getPropertyValue('--width'));
         const alreadyPresent = document.getElementById('sendanamakwalichut')
 
         if (alreadyPresent) {
+            alreadyPresent.style.setProperty('--width', `${description.style.getPropertyValue('--width')}`);
             alreadyPresent.style.display = ''
         } else {
             const header = document.getElementsByClassName('flexlayout__layout')[0]
@@ -79,7 +104,7 @@ async function display() {
             divElement.style.left = '0px';
             divElement.style.top = '36px';
             divElement.style.position = 'absolute';
-            divElement.style.setProperty('--width', '655px');
+            divElement.style.setProperty('--width', `${description.style.getPropertyValue('--width')}`);
             divElement.style.setProperty('--height', '820px');
 
             const h1 = document.createElement("H1");
@@ -89,27 +114,53 @@ async function display() {
             h1.style.marginLeft = '20px'
             divElement.appendChild(h1)
 
-
-            const data = await fetch('https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=joji&type=video')
+            const url = window.location.href
+            const problemName = url.split('/')[4]
+            const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}&type=video`)
 
             const result = await data.json()
 
-            result.items.forEach((item) => {
-                console.log(item.id.videoId)
-                const outsideDiv = document.createElement('div')
-                outsideDiv.id = `${item.id.videoId}`
-                outsideDiv.style.marginBottom = '20px'
-                outsideDiv.style.marginLeft = '20px'
+            for (let item of result.items) {
+                // console.log(item.id.videoId)
+                const outsideDiv = document.createElement('div');
+                outsideDiv.id = `${item.id.videoId}`;
+                outsideDiv.style.marginBottom = '20px';
+                outsideDiv.style.marginLeft = '20px';
+                outsideDiv.style.display = 'flex'; // Make the outer div a flex container
 
-                const videoPlayer = document.createElement('iframe')
-                videoPlayer.width = '60%'
-                videoPlayer.height = '300px'
-                videoPlayer.style.display = 'flex'
-                videoPlayer.src = `https://www.youtube.com/embed/${item.id.videoId}`
+                const videoPlayer = document.createElement('iframe');
+                videoPlayer.width = '400px';
+                videoPlayer.height = '300px';
+                videoPlayer.style.flex = '0 0 auto'; // Make the video player element non-flexible
+                videoPlayer.src = `https://www.youtube.com/embed/${item.id.videoId}`;
 
-                outsideDiv.appendChild(videoPlayer)
-                divElement.appendChild(outsideDiv)
-            })
+
+                const videoDataResult = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&part=snippet&id=${item.id.videoId}&key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs`);
+                const videoData = await videoDataResult.json();
+
+                // console.log(videoData.items[0])
+                const textDiv = document.createElement('div');
+                textDiv.style.marginLeft = '20px'; // Adjust margin as needed
+                //
+                const p1 = document.createElement('p')
+                p1.textContent = `${videoData.items[0].snippet.title}`
+                // p1.style.fontSize = '1em'
+                // p1.style.marginLeft = '30px'
+
+                const p2 = document.createElement('p')
+                p2.textContent = `View Count : ${videoData.items[0].statistics.viewCount}`
+
+                const p3 = document.createElement('p')
+                p3.textContent = `Like Count : ${videoData.items[0].statistics.likeCount}`
+
+                textDiv.appendChild(p1);
+                textDiv.appendChild(p2);
+                textDiv.appendChild(p3);
+
+                outsideDiv.appendChild(videoPlayer);
+                outsideDiv.appendChild(textDiv);
+                divElement.appendChild(outsideDiv);
+            }
 
             header.appendChild(divElement);
 
@@ -117,7 +168,7 @@ async function display() {
 
 
     } else {
-        console.log(lastSet)
+        // console.log(lastSet)
         let currentItem;
         if (lastSet === 'description') currentItem = document.querySelector('.flexlayout__tab[data-layout-path="/ts0/t0"]');
         else if (lastSet === 'editorial') currentItem = document.querySelector('.flexlayout__tab[data-layout-path="/ts0/t1"]');
@@ -127,7 +178,7 @@ async function display() {
         const tabBar = document.getElementsByClassName('flexlayout__tabset_tabbar_inner flexlayout__tabset_tabbar_inner_top')[0]
         const insertedVidePage = document.getElementById('sendanamakwalichut')
 
-        console.log(currentItem)
+        // console.log(currentItem)
         insertedVidePage.style.display = 'none'
         currentItem.style.display = ''
         tabBar.style.display = ''
