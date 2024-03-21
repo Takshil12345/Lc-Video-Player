@@ -25,5 +25,21 @@
   ],
   "host_permissions": [
     "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "icon.svg",
+        "logo.svg",
+        "eye.svg",
+        "clock.svg",
+        "calendar.svg",
+        "like.svg",
+        "channel.svg"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ]
 }

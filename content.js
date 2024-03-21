@@ -1,47 +1,70 @@
-console.log("HI");
-console.log(window.location.href)
+// console.log("HI");
+// console.log(window.location.href)
 
 let showVidePage = false
 let lastSet = "description"
 let isDragging = false;
 
-if (window.location.href.startsWith("https://leetcode.com/problems/")) {
-    // Create the video column element
-    setTimeout(async () => {
-        const parent = document.getElementById('ide-top-btns').firstChild;
-        console.log(parent)
-        const newChild = document.createElement("button");
-        newChild.id = "video-button"
-        newChild.textContent = "Video"; // Set content
-        newChild.addEventListener('click', display);
-        parent.appendChild(newChild);
+let urlChanged = false;
+chrome.runtime.onMessage.addListener(
+    function (request, sender, sendResponse) {
+        // listen for messages sent from background.js
+        console.log(request.message) // new url is now in content scripts!
+        // refresh();
+        // urlChanged = true
+    });
 
-        const splitter = document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0];
-        splitter.addEventListener('mousedown', (event) => {
-            isDragging = true;
-            console.log("Dragging started")
+refresh();
 
-        });
+function refresh() {
+    if (window.location.href.startsWith("https://leetcode.com/problems/")) {
+        // Create the video column element
+        setTimeout(async () => {
+            const parent = document.getElementById('ide-top-btns').firstChild;
+            console.log(parent)
 
-        document.addEventListener('mousemove', (event) => {
-            if (isDragging && showVidePage) {
-                console.log("width is changing")
-                console.log(splitter.style.left)
-                // document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0];
-                const divToChange = document.getElementById('sendanamakwalichut');
-                if (showVidePage) divToChange.style.setProperty('--width', `${splitter.style.left}`);
+            const newChild = document.createElement("button");
+            newChild.id = "video-button"
+            // newChild.textContent = "Video"; // Set content
+            const img = document.createElement("img");
+            img.src = chrome.runtime.getURL("icon.svg"); // Replace "path/to/your/svg/file.svg" with the actual path to your SVG file
+            img.style.width = "32px"; // Adjust the width as needed
+            img.style.height = "32px"; // Adjust the height as needed
+            img.style.marginLeft = '3px'
+            // Append the img element to the button
+            newChild.appendChild(img);
 
-            }
-        });
+            newChild.addEventListener('click', display);
+            parent.appendChild(newChild);
 
-        document.addEventListener('mouseup', () => {
-            console.log("Dragging finished")
-            // console.log(document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0]);
-            isDragging = false;
-        });
 
-    }, 3000)
+            const splitter = document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0];
+            splitter.addEventListener('mousedown', (event) => {
+                isDragging = true;
+                console.log("Dragging started")
 
+            });
+
+            document.addEventListener('mousemove', (event) => {
+                if (isDragging && showVidePage) {
+                    console.log("width is changing")
+                    console.log(splitter.style.left)
+                    // document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0];
+                    const divToChange = document.getElementById('sendanamakwalichut');
+                    if (showVidePage) divToChange.style.setProperty('--width', `${splitter.style.left}`);
+
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                console.log("Dragging finished")
+                // console.log(document.getElementsByClassName('flexlayout__splitter flexlayout__splitter_vert')[0]);
+                isDragging = false;
+            });
+
+        }, 3000)
+
+    }
 }
 
 function make_display_none(arr) {
@@ -116,12 +139,12 @@ async function display() {
 
             const url = window.location.href
             const problemName = url.split('/')[4]
-            const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}&type=video`)
+            const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}+leetcode&type=video`)
 
             const result = await data.json()
 
             for (let item of result.items) {
-                // console.log(item.id.videoId)
+                console.log(item.id.videoId)
                 const outsideDiv = document.createElement('div');
                 outsideDiv.id = `${item.id.videoId}`;
                 outsideDiv.style.marginBottom = '20px';
@@ -135,27 +158,122 @@ async function display() {
                 videoPlayer.src = `https://www.youtube.com/embed/${item.id.videoId}`;
 
 
-                const videoDataResult = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&part=snippet&id=${item.id.videoId}&key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs`);
+                const videoDataResult = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&part=snippet&part=contentDetails&id=${item.id.videoId}&key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs`);
                 const videoData = await videoDataResult.json();
 
                 // console.log(videoData.items[0])
                 const textDiv = document.createElement('div');
                 textDiv.style.marginLeft = '20px'; // Adjust margin as needed
+                textDiv.style.marginTop = '80px'
                 //
                 const p1 = document.createElement('p')
-                p1.textContent = `${videoData.items[0].snippet.title}`
+                const div1 = document.createElement('div')
+                div1.style.display = 'flex';
+
+                const calendar = document.createElement('img');
+                calendar.style.marginRight = '5px';
+                calendar.style.width = '20px';
+                calendar.style.height = '20px';
+                calendar.src = chrome.runtime.getURL("calendar.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+                const dateString = videoData.items[0].snippet.publishedAt;
+                const date = new Date(dateString);
+                const currentDate = new Date();
+
+                const years = currentDate.getFullYear() - date.getFullYear();
+                const months = (currentDate.getMonth() - date.getMonth() + 12) % 12;
+                // console.log(years)
+                // console.log(months)
+
+                let timeAgo = ""
+                if (years) timeAgo = `${years} years ago`
+                else timeAgo = `${months} months ago`
+
+                div1.appendChild(calendar)
+                p1.textContent = `${timeAgo}`
+                div1.appendChild(p1)
                 // p1.style.fontSize = '1em'
                 // p1.style.marginLeft = '30px'
 
+                const div2 = document.createElement('div')
+                div2.style.display = 'flex';
+
                 const p2 = document.createElement('p')
-                p2.textContent = `View Count : ${videoData.items[0].statistics.viewCount}`
+                const clock = document.createElement('img');
+                clock.style.marginRight = '5px';
+                clock.style.width = '20px';
+                clock.style.height = '20px';
+                clock.src = chrome.runtime.getURL("clock.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+                div2.appendChild(clock);
+
+                const timeString = `${videoData.items[0].contentDetails.duration}`
+                const matches = timeString.match(/PT(\d+)M(?:(\d+)S)?/);
+                const minutes = parseInt(matches[1]);
+                // if(matches.length>=3)const seconds = parseInt(matches[2]);
+                p2.textContent = `${minutes} mins `
+
+                div2.appendChild(p2)
+
+                const div3 = document.createElement('div')
+                div3.style.display = 'flex';
 
                 const p3 = document.createElement('p')
-                p3.textContent = `Like Count : ${videoData.items[0].statistics.likeCount}`
+                const views = document.createElement('img');
+                views.style.marginRight = '5px';
+                views.style.width = '20px';
+                views.style.height = '20px';
+                views.src = chrome.runtime.getURL("eye.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
 
-                textDiv.appendChild(p1);
-                textDiv.appendChild(p2);
-                textDiv.appendChild(p3);
+                div3.appendChild(views);
+                p3.textContent = ` ${videoData.items[0].statistics.viewCount} views`
+                div3.appendChild(p3)
+
+                const div4 = document.createElement('div')
+                div4.style.display = 'flex';
+                const like = document.createElement('img');
+                like.style.marginRight = '5px';
+                like.style.width = '20px';
+                like.style.height = '20px';
+                like.src = chrome.runtime.getURL("like.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+                const p4 = document.createElement('p')
+
+                div4.appendChild(like)
+                p4.textContent = `${videoData.items[0].statistics.likeCount}`
+                div4.appendChild(p4)
+
+                const div5 = document.createElement('div')
+                div5.style.display = 'flex';
+
+                const channel = document.createElement('img');
+                channel.style.marginRight = '5px';
+                channel.style.width = '20px';
+                channel.style.height = '20px';
+                channel.src = chrome.runtime.getURL("icon.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+                div5.appendChild(channel)
+                const p5 = document.createElement('p')
+                p5.textContent = `${videoData.items[0].snippet.channelTitle}`
+                div5.appendChild(p5)
+
+                const div6 = document.createElement('div')
+                div6.style.display = 'flex';
+                div6.style.marginTop = '6px'
+
+                const link = document.createElement('a');
+                link.setAttribute('href', `https://www.youtube.com/watch?v=${item.id.videoId}`);
+                link.setAttribute('target', '_blank'); // Opens link in a new tab
+                link.textContent = 'Watch on Youtube';
+
+                div6.appendChild(link)
+
+                textDiv.appendChild(div1);
+                textDiv.appendChild(div2);
+                textDiv.appendChild(div3);
+                textDiv.appendChild(div4);
+                textDiv.appendChild(div5);
+                textDiv.appendChild(div6);
 
                 outsideDiv.appendChild(videoPlayer);
                 outsideDiv.appendChild(textDiv);
