@@ -30,7 +30,7 @@ function refresh() {
             img.src = chrome.runtime.getURL("icon.svg"); // Replace "path/to/your/svg/file.svg" with the actual path to your SVG file
             img.style.width = "32px"; // Adjust the width as needed
             img.style.height = "32px"; // Adjust the height as needed
-            img.style.marginLeft = '3px'
+            img.style.marginLeft = '5px'
             // Append the img element to the button
             newChild.appendChild(img);
 
@@ -209,6 +209,7 @@ async function display() {
 
                 const timeString = `${videoData.items[0].contentDetails.duration}`
                 const matches = timeString.match(/PT(\d+)M(?:(\d+)S)?/);
+                console.log(matches)
                 const minutes = parseInt(matches[1]);
                 // if(matches.length>=3)const seconds = parseInt(matches[2]);
                 p2.textContent = `${minutes} mins `
