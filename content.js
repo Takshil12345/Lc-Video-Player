@@ -5,14 +5,6 @@ let showVidePage = false
 let lastSet = "description"
 let isDragging = false;
 
-let urlChanged = false;
-chrome.runtime.onMessage.addListener(
-    function (request, sender, sendResponse) {
-        // listen for messages sent from background.js
-        console.log(request.message) // new url is now in content scripts!
-        // refresh();
-        // urlChanged = true
-    });
 
 refresh();
 
@@ -62,6 +54,26 @@ function refresh() {
                 isDragging = false;
             });
 
+            // add event listner to all 3 of those items and check if id present then delete it and add .
+            let urlChaangeArr = []
+            const item1 = document.getElementsByClassName("flex items-center")[0];
+            console.log(item1);
+            urlChaangeArr.push(item1);
+
+            urlChaangeArr.forEach((item) => {
+                item.addEventListener('click', async () => {
+                    const elementToRemove = document.getElementById('sendanamakwalichut');
+                    if (elementToRemove) {
+                        if (!showVidePage) {
+                            elementToRemove.remove();
+                        } else {
+                            await display();
+                            elementToRemove.remove();
+
+                        }
+                    }
+                })
+            })
         }, 3000)
 
     }
@@ -76,6 +88,175 @@ function make_display_none(arr) {
 
 function display_search_result() {
 
+}
+
+async function display_video_solutions(description) {
+    const header = document.getElementsByClassName('flexlayout__layout')[0]
+    // console.log(header)
+    // Create a new div element
+    const divElement = document.createElement('div');
+
+    divElement.className = 'flexlayout__tab';
+    divElement.setAttribute('data-layout-path', '/video');
+    divElement.id = 'sendanamakwalichut';
+    divElement.style.left = '0px';
+    divElement.style.top = '36px';
+    divElement.style.position = 'absolute';
+    divElement.style.setProperty('--width', `${description.style.getPropertyValue('--width')}`);
+    divElement.style.setProperty('--height', '820px');
+
+    const h1 = document.createElement("H1");
+    h1.textContent = "Video Solutions";
+    h1.style.fontSize = "3em";
+    h1.style.marginBottom = '40px'
+    h1.style.marginLeft = '20px'
+    divElement.appendChild(h1)
+
+    const url = window.location.href
+    const problemName = url.split('/')[4]
+    const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}+leetcode&type=video`)
+
+    const result = await data.json()
+
+    for (let item of result.items) {
+        console.log(item.id.videoId)
+        const outsideDiv = document.createElement('div');
+        outsideDiv.id = `${item.id.videoId}`;
+        outsideDiv.style.marginBottom = '20px';
+        outsideDiv.style.marginLeft = '20px';
+        outsideDiv.style.display = 'flex'; // Make the outer div a flex container
+
+        const videoPlayer = document.createElement('iframe');
+        videoPlayer.width = '400px';
+        videoPlayer.height = '300px';
+        videoPlayer.style.flex = '0 0 auto'; // Make the video player element non-flexible
+        videoPlayer.src = `https://www.youtube.com/embed/${item.id.videoId}`;
+
+
+        const videoDataResult = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&part=snippet&part=contentDetails&id=${item.id.videoId}&key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs`);
+        const videoData = await videoDataResult.json();
+
+        // console.log(videoData.items[0])
+        const textDiv = document.createElement('div');
+        textDiv.style.marginLeft = '20px'; // Adjust margin as needed
+        textDiv.style.marginTop = '80px'
+        //
+        const p1 = document.createElement('p')
+        const div1 = document.createElement('div')
+        div1.style.display = 'flex';
+
+        const calendar = document.createElement('img');
+        calendar.style.marginRight = '5px';
+        calendar.style.width = '20px';
+        calendar.style.height = '20px';
+        calendar.src = chrome.runtime.getURL("calendar.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+        const dateString = videoData.items[0].snippet.publishedAt;
+        const date = new Date(dateString);
+        const currentDate = new Date();
+
+        const years = currentDate.getFullYear() - date.getFullYear();
+        const months = (currentDate.getMonth() - date.getMonth() + 12) % 12;
+        // console.log(years)
+        // console.log(months)
+
+        let timeAgo = ""
+        if (years) timeAgo = `${years} years ago`
+        else timeAgo = `${months} months ago`
+
+        div1.appendChild(calendar)
+        p1.textContent = `${timeAgo}`
+        div1.appendChild(p1)
+        // p1.style.fontSize = '1em'
+        // p1.style.marginLeft = '30px'
+
+        const div2 = document.createElement('div')
+        div2.style.display = 'flex';
+
+        const p2 = document.createElement('p')
+        const clock = document.createElement('img');
+        clock.style.marginRight = '5px';
+        clock.style.width = '20px';
+        clock.style.height = '20px';
+        clock.src = chrome.runtime.getURL("clock.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+        div2.appendChild(clock);
+
+        const timeString = `${videoData.items[0].contentDetails.duration}`
+        const matches = timeString.match(/PT(\d+)M(?:(\d+)S)?/);
+        console.log(matches)
+        const minutes = parseInt(matches[1]);
+        // if(matches.length>=3)const seconds = parseInt(matches[2]);
+        p2.textContent = `${minutes} mins `
+
+        div2.appendChild(p2)
+
+        const div3 = document.createElement('div')
+        div3.style.display = 'flex';
+
+        const p3 = document.createElement('p')
+        const views = document.createElement('img');
+        views.style.marginRight = '5px';
+        views.style.width = '20px';
+        views.style.height = '20px';
+        views.src = chrome.runtime.getURL("eye.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+        div3.appendChild(views);
+        p3.textContent = ` ${videoData.items[0].statistics.viewCount} views`
+        div3.appendChild(p3)
+
+        const div4 = document.createElement('div')
+        div4.style.display = 'flex';
+        const like = document.createElement('img');
+        like.style.marginRight = '5px';
+        like.style.width = '20px';
+        like.style.height = '20px';
+        like.src = chrome.runtime.getURL("like.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+        const p4 = document.createElement('p')
+
+        div4.appendChild(like)
+        p4.textContent = `${videoData.items[0].statistics.likeCount}`
+        div4.appendChild(p4)
+
+        const div5 = document.createElement('div')
+        div5.style.display = 'flex';
+
+        const channel = document.createElement('img');
+        channel.style.marginRight = '5px';
+        channel.style.width = '20px';
+        channel.style.height = '20px';
+        channel.src = chrome.runtime.getURL("icon.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
+
+        div5.appendChild(channel)
+        const p5 = document.createElement('p')
+        p5.textContent = `${videoData.items[0].snippet.channelTitle}`
+        div5.appendChild(p5)
+
+        const div6 = document.createElement('div')
+        div6.style.display = 'flex';
+        div6.style.marginTop = '6px'
+
+        const link = document.createElement('a');
+        link.setAttribute('href', `https://www.youtube.com/watch?v=${item.id.videoId}`);
+        link.setAttribute('target', '_blank'); // Opens link in a new tab
+        link.textContent = 'Watch on Youtube';
+
+        div6.appendChild(link)
+
+        textDiv.appendChild(div1);
+        textDiv.appendChild(div2);
+        textDiv.appendChild(div3);
+        textDiv.appendChild(div4);
+        textDiv.appendChild(div5);
+        textDiv.appendChild(div6);
+
+        outsideDiv.appendChild(videoPlayer);
+        outsideDiv.appendChild(textDiv);
+        divElement.appendChild(outsideDiv);
+    }
+
+    header.appendChild(divElement);
 }
 
 
@@ -116,173 +297,7 @@ async function display() {
             alreadyPresent.style.setProperty('--width', `${description.style.getPropertyValue('--width')}`);
             alreadyPresent.style.display = ''
         } else {
-            const header = document.getElementsByClassName('flexlayout__layout')[0]
-            // console.log(header)
-            // Create a new div element
-            const divElement = document.createElement('div');
-
-            divElement.className = 'flexlayout__tab';
-            divElement.setAttribute('data-layout-path', '/video');
-            divElement.id = 'sendanamakwalichut';
-            divElement.style.left = '0px';
-            divElement.style.top = '36px';
-            divElement.style.position = 'absolute';
-            divElement.style.setProperty('--width', `${description.style.getPropertyValue('--width')}`);
-            divElement.style.setProperty('--height', '820px');
-
-            const h1 = document.createElement("H1");
-            h1.textContent = "Video Solutions";
-            h1.style.fontSize = "3em";
-            h1.style.marginBottom = '40px'
-            h1.style.marginLeft = '20px'
-            divElement.appendChild(h1)
-
-            const url = window.location.href
-            const problemName = url.split('/')[4]
-            const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}+leetcode&type=video`)
-
-            const result = await data.json()
-
-            for (let item of result.items) {
-                console.log(item.id.videoId)
-                const outsideDiv = document.createElement('div');
-                outsideDiv.id = `${item.id.videoId}`;
-                outsideDiv.style.marginBottom = '20px';
-                outsideDiv.style.marginLeft = '20px';
-                outsideDiv.style.display = 'flex'; // Make the outer div a flex container
-
-                const videoPlayer = document.createElement('iframe');
-                videoPlayer.width = '400px';
-                videoPlayer.height = '300px';
-                videoPlayer.style.flex = '0 0 auto'; // Make the video player element non-flexible
-                videoPlayer.src = `https://www.youtube.com/embed/${item.id.videoId}`;
-
-
-                const videoDataResult = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&part=snippet&part=contentDetails&id=${item.id.videoId}&key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs`);
-                const videoData = await videoDataResult.json();
-
-                // console.log(videoData.items[0])
-                const textDiv = document.createElement('div');
-                textDiv.style.marginLeft = '20px'; // Adjust margin as needed
-                textDiv.style.marginTop = '80px'
-                //
-                const p1 = document.createElement('p')
-                const div1 = document.createElement('div')
-                div1.style.display = 'flex';
-
-                const calendar = document.createElement('img');
-                calendar.style.marginRight = '5px';
-                calendar.style.width = '20px';
-                calendar.style.height = '20px';
-                calendar.src = chrome.runtime.getURL("calendar.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
-
-                const dateString = videoData.items[0].snippet.publishedAt;
-                const date = new Date(dateString);
-                const currentDate = new Date();
-
-                const years = currentDate.getFullYear() - date.getFullYear();
-                const months = (currentDate.getMonth() - date.getMonth() + 12) % 12;
-                // console.log(years)
-                // console.log(months)
-
-                let timeAgo = ""
-                if (years) timeAgo = `${years} years ago`
-                else timeAgo = `${months} months ago`
-
-                div1.appendChild(calendar)
-                p1.textContent = `${timeAgo}`
-                div1.appendChild(p1)
-                // p1.style.fontSize = '1em'
-                // p1.style.marginLeft = '30px'
-
-                const div2 = document.createElement('div')
-                div2.style.display = 'flex';
-
-                const p2 = document.createElement('p')
-                const clock = document.createElement('img');
-                clock.style.marginRight = '5px';
-                clock.style.width = '20px';
-                clock.style.height = '20px';
-                clock.src = chrome.runtime.getURL("clock.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
-
-                div2.appendChild(clock);
-
-                const timeString = `${videoData.items[0].contentDetails.duration}`
-                const matches = timeString.match(/PT(\d+)M(?:(\d+)S)?/);
-                console.log(matches)
-                const minutes = parseInt(matches[1]);
-                // if(matches.length>=3)const seconds = parseInt(matches[2]);
-                p2.textContent = `${minutes} mins `
-
-                div2.appendChild(p2)
-
-                const div3 = document.createElement('div')
-                div3.style.display = 'flex';
-
-                const p3 = document.createElement('p')
-                const views = document.createElement('img');
-                views.style.marginRight = '5px';
-                views.style.width = '20px';
-                views.style.height = '20px';
-                views.src = chrome.runtime.getURL("eye.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
-
-                div3.appendChild(views);
-                p3.textContent = ` ${videoData.items[0].statistics.viewCount} views`
-                div3.appendChild(p3)
-
-                const div4 = document.createElement('div')
-                div4.style.display = 'flex';
-                const like = document.createElement('img');
-                like.style.marginRight = '5px';
-                like.style.width = '20px';
-                like.style.height = '20px';
-                like.src = chrome.runtime.getURL("like.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
-
-                const p4 = document.createElement('p')
-
-                div4.appendChild(like)
-                p4.textContent = `${videoData.items[0].statistics.likeCount}`
-                div4.appendChild(p4)
-
-                const div5 = document.createElement('div')
-                div5.style.display = 'flex';
-
-                const channel = document.createElement('img');
-                channel.style.marginRight = '5px';
-                channel.style.width = '20px';
-                channel.style.height = '20px';
-                channel.src = chrome.runtime.getURL("icon.svg"); // Replace 'path/to/your/image.png' with the actual path to your image
-
-                div5.appendChild(channel)
-                const p5 = document.createElement('p')
-                p5.textContent = `${videoData.items[0].snippet.channelTitle}`
-                div5.appendChild(p5)
-
-                const div6 = document.createElement('div')
-                div6.style.display = 'flex';
-                div6.style.marginTop = '6px'
-
-                const link = document.createElement('a');
-                link.setAttribute('href', `https://www.youtube.com/watch?v=${item.id.videoId}`);
-                link.setAttribute('target', '_blank'); // Opens link in a new tab
-                link.textContent = 'Watch on Youtube';
-
-                div6.appendChild(link)
-
-                textDiv.appendChild(div1);
-                textDiv.appendChild(div2);
-                textDiv.appendChild(div3);
-                textDiv.appendChild(div4);
-                textDiv.appendChild(div5);
-                textDiv.appendChild(div6);
-
-                outsideDiv.appendChild(videoPlayer);
-                outsideDiv.appendChild(textDiv);
-                divElement.appendChild(outsideDiv);
-            }
-
-            header.appendChild(divElement);
-
+            await display_video_solutions(description);
         }
 
 
