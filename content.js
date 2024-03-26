@@ -74,7 +74,7 @@ function refresh() {
                     }
                 })
             })
-        }, 3000)
+        }, 5000)
 
     }
 }
@@ -112,10 +112,10 @@ async function display_video_solutions(description) {
     h1.style.marginLeft = '20px'
     divElement.appendChild(h1)
 
-    const url = window.location.href
-    const problemName = url.split('/')[4]
-    const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}+leetcode&type=video`)
-
+    // const url = window.location.href
+    const problemName = document.getElementsByClassName('no-underline hover:text-blue-s dark:hover:text-dark-blue-s truncate cursor-text whitespace-normal hover:!text-[inherit]')[0].innerHTML
+    const data = await fetch(`https://www.googleapis.com/youtube/v3/search?key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs&q=${problemName}&type=video`)
+    // console.log(document.getElementsByClassName('no-underline hover:text-blue-s dark:hover:text-dark-blue-s truncate cursor-text whitespace-normal hover:!text-[inherit]')[0].innerHTML)
     const result = await data.json()
 
     for (let item of result.items) {
@@ -135,7 +135,8 @@ async function display_video_solutions(description) {
 
         const videoDataResult = await fetch(`https://www.googleapis.com/youtube/v3/videos?part=statistics&part=snippet&part=contentDetails&id=${item.id.videoId}&key=AIzaSyBMioTPkZ9q7-3O9mPc-qxuKBj1_IZrdEs`);
         const videoData = await videoDataResult.json();
-
+        // console.log(videoData.items[0].snippet.title)
+        // console.log(problemName)
         // console.log(videoData.items[0])
         const textDiv = document.createElement('div');
         textDiv.style.marginLeft = '20px'; // Adjust margin as needed
