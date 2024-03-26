@@ -130,6 +130,7 @@ async function display_video_solutions(description) {
         videoPlayer.width = '400px';
         videoPlayer.height = '300px';
         videoPlayer.style.flex = '0 0 auto'; // Make the video player element non-flexible
+        videoPlayer.allow = 'fullscreen;'
         videoPlayer.src = `https://www.youtube.com/embed/${item.id.videoId}`;
 
 
