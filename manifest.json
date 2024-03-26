@@ -8,6 +8,7 @@
   },
   "action": {
     "default_popup": "popup.html"
+    "default_icon":"ext_logo.png"
   },
   "content_scripts": [
     {
